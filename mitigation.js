@@ -22,9 +22,9 @@ for(var i = 0; i < devs.length; i++) {
   nameToPort[dev] = port; // find port via port name. ex: find s1's port
 }
 
-var fl = { hostname: 'localhost', port: 8080 }; //set sFlow location
+var fl = { hostname: 'localhost', port: 8080 }; //floodlight
 var groups = {'external':['0.0.0.0/0'],'internal':['10.0.0.4/32']};
-var rt = { hostname: 'localhost', port: 8008 };
+var rt = { hostname: 'localhost', port: 8008 }; //sFlow
 var flows = {'keys':keys,'value':value,'filter':filter};
 var threshold = {'metric':metricName,'value':thresholdValue};
 
@@ -90,14 +90,16 @@ function blockFlow(agent,dataSource,topKey) {
   if(!port || !port.dpid) return;
   var message = {"switch":port.dpid,
                  "name":"dos-1",
-                 "in-port":port.portNumber.toString,
+                 "in_port":port.portNumber.toString,
                  "eth_type":parts[1],
                  "ip_proto":parts[4],
                  "ipv4_src":parts[5],
                  "ipv4_dst":parts[6],
                  "priority":"32767",
-                 "active":"true"};
-  jsonPost(fl,'/wm/staticflowpusher/json',message,
+                 "active":"true",
+                 "actions":"" //specify no action to drop packets
+             };
+  jsonPost(fl,'/wm/staticentrypusher/json',message,
       function(response) {
          console.log("result=" + JSON.stringify(response));
       });
