@@ -1,7 +1,6 @@
 #!/usr/bin/python
  
 """
-
 """
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController, OVSKernelSwitch, IVSSwitch, UserSwitch

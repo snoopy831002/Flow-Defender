@@ -22,7 +22,7 @@ for(var i = 0; i < devs.length; i++) {
   nameToPort[dev] = port; // find port via port name. ex: find s1's port
 }
 
-var fl = { hostname: 'localhost', port: 8080 }; //floodlight
+var fl = { hostname: 'localhost', port: 8083 }; //floodlight
 var groups = {'external':['0.0.0.0/0'],'internal':['10.0.0.4/32']};
 var rt = { hostname: 'localhost', port: 8008 }; //sFlow
 var flows = {'keys':keys,'value':value,'filter':filter};
