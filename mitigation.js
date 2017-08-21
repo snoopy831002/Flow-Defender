@@ -1,10 +1,10 @@
 var fs = require("fs");
 var http = require('http');
 
-var keys = 'inputifindex,ethernetprotocol,macsource,macdestination,ipprotocol,ipsource,ipdestination';
+var keys = 'inputifindex,ethernetprotocol,ipprotocol,ipsource';
 var value = 'frames';
 var filter = 'outputifindex!=discard';
-var thresholdValue = 100;
+var thresholdValue = 2;
 var metricName = 'ddos';
 
 // mininet mapping between sFlow ifIndex numbers and switch/port names
@@ -89,22 +89,20 @@ function blockFlow(agent,dataSource,topKey) {
   var parts = topKey.split(',');
   var port = lookupOpenFlowPort(agent,parts[0]);
   if(!port || !port.dpid) return;
- 
   var message = {"switch":port.dpid,
                  "name":"dos-1",
                  "in-port":port.portNumber.toString,
                  "eth_type":parts[1],
-                 "ip_proto":parts[4],
-                 "ipv4_src":parts[5],
-                 "ipv4_dst":parts[6],
+                 "ip_proto":parts[2],
+                 "ipv4_src":parts[3],
                  "priority":"32767",
                  "active":"true"};
-
   console.log("message=" + JSON.stringify(message));
   jsonPost(fl,'/wm/staticflowpusher/json',message,
       function(response) {
          console.log("result=" + JSON.stringify(response));
       });
+  
 }
 
 function getTopFlows(event) {
@@ -148,10 +146,8 @@ function getSwitches() {
     function(switches) { 
       var dpids = Object.keys(switches);
       for(var i = 0; i < dpids.length; i++) {
-
         var sw = switches[dpids[i]];
         var ports = sw['port_desc'];
-        console.log(sw);
         for(var j = 0; j < ports.length; j++) {
           var port = nameToPort[ports[j].name];
           if(port) {
