@@ -4,8 +4,12 @@ var http = require('http');
 var keys = 'inputifindex,ethernetprotocol,ipprotocol,ipsource';
 var value = 'frames';
 var filter = 'outputifindex!=discard';
-var thresholdValue = 2;
+var thresholdValue = 5000;
 var metricName = 'ddos';
+var exceedThresholdStart;
+var exceedThresholdEnd;
+var blockflowStart;
+var blockflowEnd;
 
 // mininet mapping between sFlow ifIndex numbers and switch/port names
 var ifindexToPort = {};
@@ -109,13 +113,29 @@ function getTopFlows(event) {
   console.log('getTopFlows');
   jsonGet(rt,'/metric/' + event.agent + '/' + event.dataSource + '.' + event.metric + '/json',
     function(metrics) {
+      //console.log("=======================");
+      //console.log(metrics,null,2);
+      //console.log("=======================");
       if(metrics && metrics.length == 1) {
         var metric = metrics[0];
         if(metric.metricValue > thresholdValue
            && metric.topKeys
            && metric.topKeys.length > 0) {
             var topKey = metric.topKeys[0].key;
+            exceedThresholdStart = new Date();
+            blockflowStart = new Date();
             blockFlow(event.agent,event.dataSource,topKey);
+            blockflowEnd = new Date() - blockflowStart;
+            console.log("################################");
+            console.log("blockFlow excution time :"+blockflowEnd+" ms");
+            console.log("################################");
+        }
+        else if((metric.metricValue < thresholdValue)&& exceedThresholdStart) {
+            exceedThresholdEnd = new Date() - exceedThresholdStart;
+            console.log("********************************");
+            console.log("threshold exceeded time :"+exceedThresholdEnd+" ms");
+            console.log("********************************");
+            exceedThresholdStart=(function () { return; })();
         }
       }
     }
@@ -124,17 +144,22 @@ function getTopFlows(event) {
 
 function getEvents(id) {
   console.log('getEvents');
-  jsonGet(rt,'/events/json?maxEvents=10&timeout=60&eventID='+ id,
+  jsonGet(rt,'/events/json?maxEvents=10&timeout=5&eventID='+ id,
     function(events) {
+
+      //console.log("++++++++++++++++++++++++++");
+      //console.log(JSON.stringify(events,null, 2));
+      //console.log("++++++++++++++++++++++++++");
+      
       var nextID = id;
       if(events.length > 0) {
-        nextID = events[0].eventID;
         events.reverse();
         for(var i = 0; i < events.length; i++) {
-          if(metricName == events[i].thresholdID) getTopFlows(events[i]);
+          if(metricName == events[i].thresholdID) getTopFlows(events[i]); // average
         }
       }
-      getEvents(nextID);  
+      console.log("nextID:"+nextID);
+      getEvents(-1);  
     }
   );
 }
